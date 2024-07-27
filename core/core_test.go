@@ -28,6 +28,10 @@ func assertEq[T any](subject string, a T, b T, f func(string)) {
 	f(fmt.Sprintf(s, subject, as, bs))
 }
 
+// -----------------------------------------------------------------------------
+// Encoder.
+// -----------------------------------------------------------------------------
+
 func TestEncoderImplEncodeIdeal(t *testing.T) {
 	buf := bytes.NewBuffer(nil)
 	enc := EncoderImpl{Impl: gob.NewEncoder(buf).Encode}
@@ -42,4 +46,27 @@ func TestEncoderImplEncodeWithNilImpl(t *testing.T) {
 
 	err := enc.Encode("test")
 	assertEq("err", io.ErrClosedPipe, err, func(s string) { t.Fatal(s) })
+}
+
+// -----------------------------------------------------------------------------
+// Decoder.
+// -----------------------------------------------------------------------------
+
+func TestDecoderImplDecodeIdeal(t *testing.T) {
+	buf := bytes.NewBuffer([]byte(`"test"`))
+	dec := DecoderImpl{Impl: json.NewDecoder(buf).Decode}
+
+	val := ""
+	err := dec.Decode(&val)
+	assertEq("err", *new(error), err, func(s string) { t.Fatal(s) })
+	assertEq("val", "test", val, func(s string) { t.Fatal(s) })
+}
+
+func TestDecoderImplDecodeWithNilImpl(t *testing.T) {
+	dec := DecoderImpl{}
+
+	val := ""
+	err := dec.Decode(&val)
+	assertEq("err", io.EOF, err, func(s string) { t.Fatal(s) })
+	assertEq("val", "", val, func(s string) { t.Fatal(s) })
 }

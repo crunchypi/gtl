@@ -10,6 +10,7 @@ Index:
 
 GTL tries to get out of your way and so only two errors are used in the core pkg, both inherited from `io` in the std lib:
 ```go
+io.EOF              // Stop reading/pulling/consuming.
 io.ErrClosedPipe    // Stop writing/pushing/producing.
 ```
 </details>
