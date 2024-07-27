@@ -75,3 +75,39 @@ func (impl DecoderImpl) Decode(d any) error {
 
 	return impl.Impl(d)
 }
+
+// -----------------------------------------------------------------------------
+// Implementation io.Reader, io.Writer, io.ReadWriter and closer variants.
+// -----------------------------------------------------------------------------
+
+type readWriteCloserImpl struct {
+	ImplC func() error
+	ImplR func([]byte) (int, error)
+	ImplW func([]byte) (int, error)
+}
+
+func (impl readWriteCloserImpl) Close() (err error) {
+	if impl.ImplC == nil {
+		return
+	}
+
+	return impl.ImplC()
+}
+
+func (impl readWriteCloserImpl) Read(p []byte) (n int, err error) {
+	if impl.ImplR == nil {
+		err = io.EOF
+		return
+	}
+
+	return impl.ImplR(p)
+}
+
+func (impl readWriteCloserImpl) Write(p []byte) (n int, err error) {
+	if impl.ImplW == nil {
+		err = io.ErrClosedPipe
+		return
+	}
+
+	return impl.ImplW(p)
+}
