@@ -24,7 +24,26 @@ type Reader[T any] interface {
 }
 ```
 
-There is also an impl struct which lets you implement a `core.Reader`with a function. 
+
+<br>
+<details>
+<summary>
+As with the io package, there are varying combinations of basic interfaces, e.g io.ReadCloser. These groupings are for the most part mirrored here and can be viewed by clicking on this section.
+</summary>
+
+```go
+type ReadCloser[T any] interface {
+	io.Closer
+	Reader[T]
+}
+```
+</details>
+
+<br>
+<details>
+<summary>
+There are also "impl structs" which lets you implement most core interfaces with a function, allowing you to dodge boilerplate-y code. These can be viewed by clicking on this section.
+</summary>
 
 ```go
 type ReaderImpl[T any] struct {
@@ -34,3 +53,18 @@ type ReaderImpl[T any] struct {
 // Calls impl.Impl.
 func (impl ReaderImpl[T]) Read(ctx context.Context) (r T, err error)
 ```
+
+```go
+type ReadCloserImpl[T any] struct {
+	ImplC func() error
+	ImplR func(context.Context) (T, error)
+}
+
+// Calls impl.ImplC.
+func (impl ReadCloserImpl[T]) Close() (err error)
+
+// Calls impl.ImplR.
+func (impl ReadCloserImpl[T]) Read(ctx context.Context) (r T, err error)
+```
+
+</details>
