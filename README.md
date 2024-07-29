@@ -4,6 +4,7 @@ Extendable and minimalistic ETL toolkit in Go, built on generic io (std lib) pip
 Index:
 - [errors](#errors)
 - [core interfaces](#core-interfaces)
+- [core constructors](#core-constructors)
 
 ## Errors
 <details>
@@ -68,3 +69,9 @@ func (impl ReadCloserImpl[T]) Read(ctx context.Context) (r T, err error)
 ```
 
 </details>
+
+
+
+## Core constructors
+Core constructors simply convert `io.Reader` (bytes) into `core.Reader` (generic values) and back, here is a list of signatures:
+- `func NewReaderFrom[T any](vs ...T) Reader[T]`
