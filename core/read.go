@@ -1,6 +1,7 @@
 package core
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"io"
@@ -136,6 +137,56 @@ func NewReaderFromBytes[T any](r io.Reader) func(f decoderFn) Reader[T] {
 			Impl: func(ctx context.Context) (v T, err error) {
 				err = d.Decode(&v)
 				return
+			},
+		}
+	}
+}
+
+// NewReaderFromValues converts an iox.Reader (values) into an io.Reader (bytes).
+// Nil 'r' returns an empty non-nil Reader; nil 'f' uses json.NewEncoder.
+//
+// Example:
+//
+//	// Create the io.Reader from value Reader.
+//	r := NewReaderFromValues(NewReaderFrom("test1"))(
+//	    func(w io.Writer) Encoder {
+//	        return json.NewEncoder(w)
+//	    },
+//	)
+//
+//	// Instantly pass it to a decoder just so we may log out the values.
+//	dec := json.NewDecoder(r)
+//	val := ""
+//
+//	t.Log(dec.Decode(&val), val) // <nil>, "test1"
+//	t.Log(dec.Decode(&val), val) // EOF, "test1" <--- val is unchanged.
+func NewReaderFromValues[T any](r Reader[T]) func(f encoderFn) io.Reader {
+	return func(f func(io.Writer) Encoder) io.Reader {
+		if r == nil {
+			return readWriteCloserImpl{}
+		}
+
+		b := bytes.NewBuffer(nil)
+		e := Encoder(json.NewEncoder(b))
+		if f != nil {
+			if _e := f(b); _e != nil {
+				e = _e
+			}
+		}
+
+		return readWriteCloserImpl{
+			ImplR: func(p []byte) (n int, err error) {
+				v, err := r.Read(context.Background())
+				if err != nil {
+					return 0, err
+				}
+
+				err = e.Encode(v)
+				if err != nil {
+					return 0, err
+				}
+
+				return b.Read(p)
 			},
 		}
 	}
