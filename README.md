@@ -73,7 +73,10 @@ func (impl ReadCloserImpl[T]) Read(ctx context.Context) (r T, err error)
 
 
 ## Core constructors
-Core constructors simply convert `io.Reader` (bytes) into `core.Reader` (generic values) and back, here is a list of signatures:
+Core constructors for the most part convert `io.Reader` (bytes) into `core.Reader` (generic values) and back, here is a list of signatures:
 - `func NewReaderFrom[T any](vs ...T) Reader[T]`
 - `func NewReaderFromBytes[T any](r io.Reader) func(f func(io.Reader) Decoder) Reader[T]`
 - `func NewReaderFromValues[T any](r Reader[T]) func(f func(io.Writer) Encoder) io.Reader`
+
+Also, there are additional constructors for manipulating streams.
+- `func NewReaderWithBatching[T any](r Reader[T], size int) Reader[[]T]`
