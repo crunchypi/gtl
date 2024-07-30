@@ -80,3 +80,4 @@ Core constructors for the most part convert `io.Reader` (bytes) into `core.Reade
 
 Also, there are additional constructors for manipulating streams.
 - `func NewReaderWithBatching[T any](r Reader[T], size int) Reader[[]T]`
+- `func NewReaderWithUnbatching[T any](r Reader[[]T]) Reader[T]`
