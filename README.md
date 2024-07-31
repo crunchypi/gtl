@@ -18,12 +18,19 @@ io.ErrClosedPipe    // Stop writing/pushing/producing.
 </details>
 
 ## Core interfaces
-There is one core interface and it is shown below. It is simply a generic variant of `io.Reader`combined with a `context.Context`. 
+There are two core interfaces and they are shown below. They are simply generic variants of `io.Reader`and `io.Writer` combined with a `context.Context`. 
 ```go
 type Reader[T any] interface {
 	Read(context.Context) (T, error)
 }
 ```
+
+```go
+type Writer[T any] interface {
+	Write(context.Context, T) error
+}
+```
+
 
 
 <br>
@@ -66,6 +73,15 @@ func (impl ReadCloserImpl[T]) Close() (err error)
 
 // Calls impl.ImplR.
 func (impl ReadCloserImpl[T]) Read(ctx context.Context) (r T, err error)
+```
+
+```go
+type WriterImpl[T any] struct {
+	Impl func(context.Context, T) error
+}
+
+// Calls impl.Impl.
+func (impl WriterImpl[T]) Write(ctx context.Context, v T) (err error)
 ```
 
 </details>
