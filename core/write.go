@@ -41,3 +41,41 @@ func (impl WriterImpl[T]) Write(ctx context.Context, v T) (err error) {
 
 	return impl.Impl(ctx, v)
 }
+
+// -----------------------------------------------------------------------------
+// New WriteCloser iface + impl.
+// -----------------------------------------------------------------------------
+
+// WriteCloser groups Writer with io.Closer.
+type WriteCloser[T any] interface {
+	io.Closer
+	Writer[T]
+}
+
+// WriteCloserImpl lets you implement WriteCloser with functions. This is
+// similar to WriterImpl but lets you implement io.Closer as well.
+type WriteCloserImpl[T any] struct {
+	ImplC func() error
+	ImplW func(context.Context, T) error
+}
+
+// Close implements io.Closer by deferring to the internal ImplC func.
+// If the internal ImplC func is nil, nothing will happen.
+func (impl WriteCloserImpl[T]) Close() error {
+	if impl.ImplC == nil {
+		return nil
+	}
+
+	return impl.ImplC()
+}
+
+// Write implements Writer by deferring to the internal "ImplW" func.
+// If the internal "ImplW" is not set, an io.ErrClosedPipe will be returned.
+func (impl WriteCloserImpl[T]) Write(ctx context.Context, v T) (err error) {
+	if impl.ImplW == nil {
+		err = io.ErrClosedPipe
+		return
+	}
+
+	return impl.ImplW(ctx, v)
+}

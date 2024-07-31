@@ -44,6 +44,11 @@ type ReadCloser[T any] interface {
 	io.Closer
 	Reader[T]
 }
+
+type WriteCloser[T any] interface {
+	io.Closer
+	Writer[T]
+}
 ```
 </details>
 
@@ -82,6 +87,19 @@ type WriterImpl[T any] struct {
 
 // Calls impl.Impl.
 func (impl WriterImpl[T]) Write(ctx context.Context, v T) (err error)
+```
+
+```go
+type WriteCloserImpl[T any] struct {
+	ImplC func() error
+	ImplW func(context.Context, T) error
+}
+
+// Calls impl.ImplC
+func (impl WriteCloserImpl[T]) Close() error 
+
+// Calls impl.ImplW
+func (impl WriteCloserImpl[T]) Write(ctx context.Context, v T) (err error)
 ```
 
 </details>
