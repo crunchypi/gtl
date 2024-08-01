@@ -1,7 +1,9 @@
 package core
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"io"
 )
 
@@ -78,4 +80,56 @@ func (impl WriteCloserImpl[T]) Write(ctx context.Context, v T) (err error) {
 	}
 
 	return impl.ImplW(ctx, v)
+}
+
+// -----------------------------------------------------------------------------
+// Constructors.
+// -----------------------------------------------------------------------------
+
+// NewWriterFromValues creates a Writer (vals) which writes into 'w'.
+// Nil 'w' returns an empty non-nil Writer; nil 'f' uses json.NewEncoder.
+//
+// Example:
+//
+//	// Defining our io.Writer to rcv the data + encoding method.
+//	b := bytes.NewBuffer(nil)
+//	f := func(w io.Writer) Encoder { return json.NewEncoder(w) }
+//	w := NewWriterFromValues[int](b)(f)
+//
+//	// Write values, they are encoded and passed to 'b'. Err handling ignored.
+//	w.Write(nil, 2)
+//
+//	// We'll use these to read what's in 'b'.
+//	dec := json.NewDecoder(b)
+//	val := 0
+//
+//	t.Log(dec.Decode(&val), val) // <nil> 2
+//	t.Log(dec.Decode(&val), val) // EOF 2
+func NewWriterFromValues[T any](w io.Writer) func(f encoderFn) Writer[T] {
+	return func(f func(io.Writer) Encoder) Writer[T] {
+		if w == nil {
+			return WriterImpl[T]{}
+		}
+
+		b := bytes.NewBuffer(nil)
+		e := func(w io.Writer) Encoder { return json.NewEncoder(w) }(b)
+
+		if f != nil {
+			if _e := f(b); _e != nil {
+				e = _e
+			}
+		}
+
+		return WriterImpl[T]{
+			Impl: func(ctx context.Context, v T) error {
+				err := e.Encode(v)
+				if err != nil {
+					return err
+				}
+
+				_, err = b.WriteTo(w)
+				return err
+			},
+		}
+	}
 }
