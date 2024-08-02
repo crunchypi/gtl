@@ -117,3 +117,4 @@ Core constructors for the most part facilitates interoperability between core in
 Also, there are additional constructors for manipulating streams.
 - `func NewReaderWithBatching[T any](r Reader[T], size int) Reader[[]T]`
 - `func NewReaderWithUnbatching[T any](r Reader[[]T]) Reader[T]`
+- `func NewWriterWithBatching[T any](w Writer[[]T], size int) Writer[T]`
