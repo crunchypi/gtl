@@ -54,6 +54,12 @@ type ReadWriter[T, U any] interface {
 	Reader[T]
 	Writer[U]
 }
+
+type ReadWriteCloser[T, U any] interface {
+	io.Closer
+	Reader[T]
+	Writer[U]
+}
 ```
 </details>
 
@@ -118,6 +124,23 @@ func (impl ReadWriterImpl[T, U]) Read(ctx context.Context) (r T, err error)
 
 // Calls impl.ImplW
 func (impl ReadWriterImpl[T, U]) Write(ctx context.Context, v U) (err error)
+```
+
+```go
+type ReadWriteCloserImpl[T, U any] struct {
+	ImplC func() error
+	ImplR func(context.Context) (T, error)
+	ImplW func(context.Context, U) error
+}
+
+// Calls impl.ImplC
+func (impl ReadWriteCloserImpl[T, U]) Close() (err error)
+
+// Calls impl.ImplR
+func (impl ReadWriteCloserImpl[T, U]) Read(ctx context.Context) (r T, err error)
+
+// Calls impl.ImplW
+func (impl ReadWriteCloserImpl[T, U]) Write(ctx context.Context, v U) (err error)
 ```
 
 </details>
