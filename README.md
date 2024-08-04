@@ -149,15 +149,35 @@ func (impl ReadWriteCloserImpl[T, U]) Write(ctx context.Context, v U) (err error
 
 ## Core constructors
 Core constructors for the most part facilitates interoperability between core interfaces and the `io` package. I.e conversion of `io.Reader` (bytes) into `core.Reader[T]`(generic vals) and back, and `io.Writer` (bytes) into `core.Writer[T]` (vals) and back. 
-- `func NewReaderFrom[T any](vs ...T) Reader[T]`
-- `func NewReaderFromBytes[T any](r io.Reader) func(f func(io.Reader) Decoder) Reader[T]`
-- `func NewReaderFromValues[T any](r Reader[T]) func(f func(io.Writer) Encoder) io.Reader`
-* `func NewWriterFromValues[T any](w io.Writer) func(f func(io.Writer) Encoder) Writer[T]`
-* `func NewWriterFromBytes[T any](w Writer[T]) func(f func(io.Reader) Decoder) io.Writer`
-- `func NewReadWriterFrom[T any](vs ...T) ReadWriter[T, T]`
+- [`func NewReaderFrom[T any](vs ...T) Reader[T]]`](
+	https://go.dev/play/p/MAoiD4GNKVF
+)
+- [`func NewReaderFromBytes[T any](r io.Reader) func(f func(io.Reader) Decoder) Reader[T]`](
+	https://go.dev/play/p/ud3zj4YT5QI
+)
+- [`func NewReaderFromValues[T any](r Reader[T]) func(f func(io.Writer) Encoder) io.Reader`](
+	https://go.dev/play/p/FqjcyoRdASp
+)
+* [`func NewWriterFromValues[T any](w io.Writer) func(f func(io.Writer) Encoder) Writer[T]`](
+	https://go.dev/play/p/2jYSMjo5Epr
+)
+* [`func NewWriterFromBytes[T any](w Writer[T]) func(f func(io.Reader) Decoder) io.Writer`](
+	https://go.dev/play/p/P5Cp4piAWES
+)
+- [`func NewReadWriterFrom[T any](vs ...T) ReadWriter[T, T]`](
+	https://go.dev/play/p/aS8fln6RiH2
+)
 
 Also, there are additional constructors for manipulating streams.
-- `func NewReaderWithBatching[T any](r Reader[T], size int) Reader[[]T]`
-- `func NewReaderWithUnbatching[T any](r Reader[[]T]) Reader[T]`
-- `func NewWriterWithBatching[T any](w Writer[[]T], size int) Writer[T]`
-- `func NewWriterWithUnbatching[T any](w Writer[T]) Writer[[]T]`
+- [`func NewReaderWithBatching[T any](r Reader[T], size int) Reader[[]T]`](
+	https://go.dev/play/p/5WhRAXCTBx9
+)
+- [`func NewReaderWithUnbatching[T any](r Reader[[]T]) Reader[T]`](
+	https://go.dev/play/p/Bvzn7fRzqzF
+)
+- [`func NewWriterWithBatching[T any](w Writer[[]T], size int) Writer[T]`](
+	https://go.dev/play/p/rlwM47TKAdr
+)
+- [`func NewWriterWithUnbatching[T any](w Writer[T]) Writer[[]T]`](
+	https://go.dev/play/p/93GgwXIly5_V
+)
