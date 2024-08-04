@@ -154,6 +154,7 @@ Core constructors for the most part facilitates interoperability between core in
 - `func NewReaderFromValues[T any](r Reader[T]) func(f func(io.Writer) Encoder) io.Reader`
 * `func NewWriterFromValues[T any](w io.Writer) func(f func(io.Writer) Encoder) Writer[T]`
 * `func NewWriterFromBytes[T any](w Writer[T]) func(f func(io.Reader) Decoder) io.Writer`
+- `func NewReadWriterFrom[T any](vs ...T) ReadWriter[T, T]`
 
 Also, there are additional constructors for manipulating streams.
 - `func NewReaderWithBatching[T any](r Reader[T], size int) Reader[[]T]`
