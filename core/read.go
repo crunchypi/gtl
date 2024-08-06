@@ -19,6 +19,9 @@ type Reader[T any] interface {
 // ReaderImpl lets you implement Reader with a function. Place it into "impl"
 // and it will be called by the "Read" method.
 //
+// Examples (interactive):
+//   - https://go.dev/play/p/B_OXoh8V6Y-
+//
 // Example:
 //
 //	func myReader() Reader[int] {
@@ -55,6 +58,9 @@ type ReadCloser[T any] interface {
 
 // ReadCloserImpl lets you implement ReadCloser with functions. This is similar
 // to ReaderImpl but lets you implement io.Closer as well.
+//
+// Examples (interactive):
+//   - https://go.dev/play/p/5GSJ1TZf2n5
 type ReadCloserImpl[T any] struct {
 	ImplC func() error
 	ImplR func(context.Context) (T, error)
@@ -86,6 +92,9 @@ func (impl ReadCloserImpl[T]) Read(ctx context.Context) (r T, err error) {
 // -----------------------------------------------------------------------------
 
 // NewReaderFrom returns a Reader which yields values from the given vals.
+//
+// Examples (interactive):
+//   - https://go.dev/play/p/MAoiD4GNKVF
 func NewReaderFrom[T any](vs ...T) Reader[T] {
 	i := 0
 	return ReaderImpl[T]{
@@ -103,6 +112,9 @@ func NewReaderFrom[T any](vs ...T) Reader[T] {
 
 // NewReaderFromBytes converts an io.Reader (bytes) into a iox.Reader (values).
 // Nil 'r' returns an empty non-nil Reader; nil 'f' uses json.NewDecoder.
+//
+// Examples (interactive):
+//   - https://go.dev/play/p/ud3zj4YT5QI
 //
 // Example:
 //
@@ -144,6 +156,9 @@ func NewReaderFromBytes[T any](r io.Reader) func(f decoderFn) Reader[T] {
 
 // NewReaderFromValues converts an iox.Reader (values) into an io.Reader (bytes).
 // Nil 'r' returns an empty non-nil Reader; nil 'f' uses json.NewEncoder.
+//
+// Examples (interactive):
+//   - https://go.dev/play/p/FqjcyoRdASp
 //
 // Example:
 //
@@ -200,6 +215,9 @@ func NewReaderFromValues[T any](r Reader[T]) func(f encoderFn) io.Reader {
 // the given size. Nil 'r' returns an empty non-nil Reader, size <= 0 defaults
 // to 8. Note, the last []T before an err (e.g io.EOF) may be smaller than 'size'.
 //
+// Examples (interactive):
+//   - https://go.dev/play/p/5WhRAXCTBx9
+//
 // Example:
 //
 //	vr := NewReadWriterFrom(1,2,3)
@@ -248,6 +266,9 @@ func NewReaderWithBatching[T any](r Reader[T], size int) Reader[[]T] {
 // NewReaderWithUnbatching returns a reader of T from a reader of []T.
 // Note that there is some internal buffering, so you may want to use this
 // with caution as an unread buffer may cause value loss.
+//
+// Examples (interactive):
+//   - https://go.dev/play/p/Bvzn7fRzqzF
 //
 // Example:
 //
