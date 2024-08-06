@@ -20,6 +20,9 @@ type Writer[T any] interface {
 // WriterImpl lets you implement Writer with a function. Place it into "impl"
 // and it will be called by the "Write" method.
 //
+// Examples (interactive):
+//   - https://go.dev/play/p/ER8VOQ6VwRO
+//
 // Example:
 //
 //	func myWriter() Writer[int] {
@@ -56,6 +59,9 @@ type WriteCloser[T any] interface {
 
 // WriteCloserImpl lets you implement WriteCloser with functions. This is
 // similar to WriterImpl but lets you implement io.Closer as well.
+//
+// Examples (interactive):
+//   - https://go.dev/play/p/rKTDQxIJgKf
 type WriteCloserImpl[T any] struct {
 	ImplC func() error
 	ImplW func(context.Context, T) error
@@ -88,6 +94,9 @@ func (impl WriteCloserImpl[T]) Write(ctx context.Context, v T) (err error) {
 
 // NewWriterFromValues creates a Writer (vals) which writes into 'w'.
 // Nil 'w' returns an empty non-nil Writer; nil 'f' uses json.NewEncoder.
+//
+// Examples (interactive):
+//   - https://go.dev/play/p/2jYSMjo5Epr
 //
 // Example:
 //
@@ -136,6 +145,9 @@ func NewWriterFromValues[T any](w io.Writer) func(f encoderFn) Writer[T] {
 
 // NewWriterFromBytes creates an io.Writer (bytes) which writes into 'w'.
 // Nil 'w' returns an empty non-nil Writer; nil 'f' uses json.NewDecoder.
+//
+// Examples (interactive):
+//   - https://go.dev/play/p/P5Cp4piAWES
 //
 // Example:
 //
@@ -206,6 +218,9 @@ func NewWriterFromBytes[T any](w Writer[T]) func(f decoderFn) io.Writer {
 // if the process exits before the buffer is filled and written to 'w', e.g
 // if 'size' is 10 but the process exits after only writing 9 times.
 //
+// Examples (interactive):
+//   - https://go.dev/play/p/rlwM47TKAdr
+//
 // Example:
 //
 //	// Writes which logs values through 't.Log'.
@@ -239,6 +254,9 @@ func NewWriterWithBatching[T any](w Writer[[]T], size int) Writer[T] {
 
 // NewWriterWithUnbatching returns a Writer which accepts []T on a Write call,
 // then iterates through the slice and writes each value to 'w'.
+//
+// Examples (interactive):
+//   - https://go.dev/play/p/93GgwXIly5_V
 //
 // Example:
 //
