@@ -69,79 +69,15 @@ type ReadWriteCloser[T, U any] interface {
 There are also "impl structs" which lets you implement most core interfaces with a function, allowing you to dodge boilerplate-y code. These can be viewed by clicking on this section.
 </summary>
 
-```go
-type ReaderImpl[T any] struct {
-	Impl func(context.Context) (T, error)
-}
+<br>
 
-// Calls impl.Impl.
-func (impl ReaderImpl[T]) Read(ctx context.Context) (r T, err error)
-```
-
-```go
-type ReadCloserImpl[T any] struct {
-	ImplC func() error
-	ImplR func(context.Context) (T, error)
-}
-
-// Calls impl.ImplC.
-func (impl ReadCloserImpl[T]) Close() (err error)
-
-// Calls impl.ImplR.
-func (impl ReadCloserImpl[T]) Read(ctx context.Context) (r T, err error)
-```
-
-```go
-type WriterImpl[T any] struct {
-	Impl func(context.Context, T) error
-}
-
-// Calls impl.Impl.
-func (impl WriterImpl[T]) Write(ctx context.Context, v T) (err error)
-```
-
-```go
-type WriteCloserImpl[T any] struct {
-	ImplC func() error
-	ImplW func(context.Context, T) error
-}
-
-// Calls impl.ImplC
-func (impl WriteCloserImpl[T]) Close() error 
-
-// Calls impl.ImplW
-func (impl WriteCloserImpl[T]) Write(ctx context.Context, v T) (err error)
-```
-
-```go
-type ReadWriterImpl[T, U any] struct {
-	ImplR func(context.Context) (T, error)
-	ImplW func(context.Context, U) error
-}
-
-// Calls impl.ImplR
-func (impl ReadWriterImpl[T, U]) Read(ctx context.Context) (r T, err error)
-
-// Calls impl.ImplW
-func (impl ReadWriterImpl[T, U]) Write(ctx context.Context, v U) (err error)
-```
-
-```go
-type ReadWriteCloserImpl[T, U any] struct {
-	ImplC func() error
-	ImplR func(context.Context) (T, error)
-	ImplW func(context.Context, U) error
-}
-
-// Calls impl.ImplC
-func (impl ReadWriteCloserImpl[T, U]) Close() (err error)
-
-// Calls impl.ImplR
-func (impl ReadWriteCloserImpl[T, U]) Read(ctx context.Context) (r T, err error)
-
-// Calls impl.ImplW
-func (impl ReadWriteCloserImpl[T, U]) Write(ctx context.Context, v U) (err error)
-```
+Signatures are links to the Go playground (examples).
+- [`type ReaderImpl[T any] struct`](https://go.dev/play/p/B_OXoh8V6Y-)
+- [`type ReadCloserImpl[T any] struct`](https://go.dev/play/p/5GSJ1TZf2n5)
+- [`type WriterImpl[T any] struct`](https://go.dev/play/p/ER8VOQ6VwRO)
+- [`type WriteCloserImpl[T any] struct`](https://go.dev/play/p/rKTDQxIJgKf)
+- [`type ReadWriterImpl[T, U any] struct`](https://go.dev/play/p/Ky2IE72bifw)
+- [`type ReadWriteCloserImpl[T, U any] struct`](https://go.dev/play/p/DJ3AXmOpUJc)
 
 </details>
 
