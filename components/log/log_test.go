@@ -182,3 +182,117 @@ func TestNewStreamedReaderWithNilCtx(t *testing.T) {
 		),
 	)
 }
+
+// -----------------------------------------------------------------------------
+// Tests: NewBatchedReader
+// -----------------------------------------------------------------------------
+
+func TestNewBatchedReaderIdeal(t *testing.T) {
+	r := core.NewReaderFrom("a", "b")
+
+	tfReadAll(
+		tvCtx,
+		NewBatchedReader(
+			NewBatchedReaderArgs[string]{
+				Reader:  core.NewReaderWithBatching(r, 1),
+				Logger:  defaultLogger,
+				Msg:     "test",
+				CtxKeys: []string{tvCtxKey},
+			},
+		),
+	)
+}
+
+func TestNewBatchedReaderWithNilReader(t *testing.T) {
+	tfReadAll(
+		tvCtx,
+		NewBatchedReader(
+			NewBatchedReaderArgs[string]{
+				Reader:  nil,
+				Logger:  defaultLogger,
+				Msg:     "test",
+				CtxKeys: []string{tvCtxKey},
+			},
+		),
+	)
+}
+
+func TestNewBatchedReaderWithNilLogger(t *testing.T) {
+	r := core.NewReaderFrom("a", "b")
+
+	tfReadAll(
+		tvCtx,
+		NewBatchedReader(
+			NewBatchedReaderArgs[string]{
+				Reader:  core.NewReaderWithBatching(r, 1),
+				Logger:  nil,
+				Msg:     "test",
+				CtxKeys: []string{tvCtxKey},
+			},
+		),
+	)
+}
+
+func TestNewBatchedReaderWithEmptyMsg(t *testing.T) {
+	r := core.NewReaderFrom("a", "b")
+
+	tfReadAll(
+		tvCtx,
+		NewBatchedReader(
+			NewBatchedReaderArgs[string]{
+				Reader:  core.NewReaderWithBatching(r, 1),
+				Logger:  defaultLogger,
+				Msg:     "",
+				CtxKeys: []string{tvCtxKey},
+			},
+		),
+	)
+}
+
+func TestNewBatchedReaderWithNilCtxKeys(t *testing.T) {
+	r := core.NewReaderFrom("a", "b")
+
+	tfReadAll(
+		tvCtx,
+		NewBatchedReader(
+			NewBatchedReaderArgs[string]{
+				Reader:  core.NewReaderWithBatching(r, 1),
+				Logger:  defaultLogger,
+				Msg:     "test",
+				CtxKeys: nil,
+			},
+		),
+	)
+}
+
+func TestNewBatchedReaderWithErr(t *testing.T) {
+	r := core.NewReaderFrom("a", "b")
+
+	tfReadAll(
+		tvCtx,
+		NewBatchedReader(
+			NewBatchedReaderArgs[string]{
+				Reader:  tfNewErredReader(core.NewReaderWithBatching(r, 1)),
+				Logger:  defaultLogger,
+				Msg:     "test",
+				CtxKeys: []string{tvCtxKey},
+			},
+		),
+	)
+}
+
+func TestNewBatchedReaderWithNilCtx(t *testing.T) {
+	r := core.NewReaderFrom("a", "b")
+
+	tfReadAll(
+		nil,
+		NewBatchedReader(
+			NewBatchedReaderArgs[string]{
+				Reader:  core.NewReaderWithBatching(r, 1),
+				Logger:  defaultLogger,
+				Msg:     "test",
+				CtxKeys: []string{tvCtxKey},
+			},
+		),
+	)
+}

@@ -126,3 +126,4 @@ This section covers ETL components, they wrap [core interfaces](#core-interfaces
 
 Logging
 - [log.NewStreamedReader](https://go.dev/play/p/SY19PSZrr0a)
+- [log.NewBatchedReader](https://go.dev/play/p/jYS_Zs3v7zw)
