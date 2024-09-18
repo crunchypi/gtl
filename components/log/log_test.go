@@ -60,6 +60,30 @@ func tfReadAll[T any](ctx context.Context, r core.Reader[T]) ([]T, error) {
 }
 
 // -----------------------------------------------------------------------------
+// Utils: Writer.
+// -----------------------------------------------------------------------------
+
+func tfNewNopWriter[T any]() core.Writer[T] {
+	return core.WriterImpl[T]{
+		Impl: func(ctx context.Context, v T) error {
+			return nil
+		},
+	}
+}
+
+func tfWriteSlice[T any](ctx context.Context, s []T, w core.Writer[T]) error {
+	err := *new(error)
+	for _, v := range s {
+		err = w.Write(ctx, v)
+		if err != nil {
+			break
+		}
+	}
+
+	return err
+}
+
+// -----------------------------------------------------------------------------
 // Tests: NewStreamedReader
 // -----------------------------------------------------------------------------
 
@@ -291,6 +315,169 @@ func TestNewBatchedReaderWithNilCtx(t *testing.T) {
 				Reader:  core.NewReaderWithBatching(r, 1),
 				Logger:  defaultLogger,
 				Msg:     "test",
+				CtxKeys: []string{tvCtxKey},
+			},
+		),
+	)
+}
+
+// -----------------------------------------------------------------------------
+// Tests: NewStreamedWriter
+// -----------------------------------------------------------------------------
+
+func TestNewStreamedWriterIdeal(t *testing.T) {
+	w := tfNewNopWriter[string]()
+
+	tfWriteSlice(
+		tvCtx,
+		[]string{"a", "b", "c"},
+		NewStreamedWriter(
+			NewStreamedWriterArgs[string]{
+				Writer:  w,
+				Logger:  defaultLogger,
+				Msg:     "test",
+				Fmt:     func(s string) any { return s },
+				CtxKeys: []string{tvCtxKey},
+			},
+		),
+	)
+}
+
+func TestNewStreamedWriterWithNilWriter(t *testing.T) {
+	tfWriteSlice(
+		tvCtx,
+		[]string{"a", "b", "c"},
+		NewStreamedWriter(
+			NewStreamedWriterArgs[string]{
+				Writer:  nil,
+				Logger:  defaultLogger,
+				Msg:     "test",
+				Fmt:     func(s string) any { return s },
+				CtxKeys: []string{tvCtxKey},
+			},
+		),
+	)
+}
+
+func TestNewStreamedWriterWithNilLogger(t *testing.T) {
+	w := tfNewNopWriter[string]()
+
+	tfWriteSlice(
+		tvCtx,
+		[]string{"a", "b", "c"},
+		NewStreamedWriter(
+			NewStreamedWriterArgs[string]{
+				Writer:  w,
+				Logger:  nil,
+				Msg:     "test",
+				Fmt:     func(s string) any { return s },
+				CtxKeys: []string{tvCtxKey},
+			},
+		),
+	)
+}
+
+func TestNewStreamedWriterWithEmptyMsg(t *testing.T) {
+	w := tfNewNopWriter[string]()
+
+	tfWriteSlice(
+		tvCtx,
+		[]string{"a", "b", "c"},
+		NewStreamedWriter(
+			NewStreamedWriterArgs[string]{
+				Writer:  w,
+				Logger:  defaultLogger,
+				Msg:     "",
+				Fmt:     func(s string) any { return s },
+				CtxKeys: []string{tvCtxKey},
+			},
+		),
+	)
+}
+
+func TestNewStreamedWriterWithNilFmt(t *testing.T) {
+	w := tfNewNopWriter[string]()
+
+	tfWriteSlice(
+		tvCtx,
+		[]string{"a", "b", "c"},
+		NewStreamedWriter(
+			NewStreamedWriterArgs[string]{
+				Writer:  w,
+				Logger:  defaultLogger,
+				Msg:     "test",
+				Fmt:     nil,
+				CtxKeys: []string{tvCtxKey},
+			},
+		),
+	)
+}
+
+func TestNewStreamedWriterWithNilCtxKeys(t *testing.T) {
+	w := tfNewNopWriter[string]()
+
+	tfWriteSlice(
+		tvCtx,
+		[]string{"a", "b", "c"},
+		NewStreamedWriter(
+			NewStreamedWriterArgs[string]{
+				Writer:  w,
+				Logger:  defaultLogger,
+				Msg:     "test",
+				Fmt:     func(s string) any { return s },
+				CtxKeys: nil,
+			},
+		),
+	)
+}
+
+func TestNewStreamedWriterWithErrClosedPipe(t *testing.T) {
+	tfWriteSlice(
+		tvCtx,
+		[]string{"a", "b", "c"},
+		NewStreamedWriter(
+			NewStreamedWriterArgs[string]{
+				Writer:  core.WriterImpl[string]{},
+				Logger:  defaultLogger,
+				Msg:     "test",
+				Fmt:     func(s string) any { return s },
+				CtxKeys: []string{tvCtxKey},
+			},
+		),
+	)
+}
+
+func TestNewStreamedWriterWithErrUnknown(t *testing.T) {
+	w := core.WriterImpl[string]{}
+	w.Impl = func(ctx context.Context, s string) error { return tvErr }
+
+	tfWriteSlice(
+		tvCtx,
+		[]string{"a", "b", "c"},
+		NewStreamedWriter(
+			NewStreamedWriterArgs[string]{
+				Writer:  w,
+				Logger:  defaultLogger,
+				Msg:     "test",
+				Fmt:     func(s string) any { return s },
+				CtxKeys: []string{tvCtxKey},
+			},
+		),
+	)
+}
+
+func TestNewStreamedWriterWithNilCtx(t *testing.T) {
+	w := tfNewNopWriter[string]()
+
+	tfWriteSlice(
+		nil,
+		[]string{"a", "b", "c"},
+		NewStreamedWriter(
+			NewStreamedWriterArgs[string]{
+				Writer:  w,
+				Logger:  defaultLogger,
+				Msg:     "test",
+				Fmt:     func(s string) any { return s },
 				CtxKeys: []string{tvCtxKey},
 			},
 		),
