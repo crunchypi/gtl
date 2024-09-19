@@ -128,3 +128,4 @@ Logging
 - [log.NewStreamedReader](https://go.dev/play/p/SY19PSZrr0a)
 - [log.NewBatchedReader](https://go.dev/play/p/jYS_Zs3v7zw)
 - [log.NewStreamedWriter](https://go.dev/play/p/NPztmctsrbQ)
+- [log.NewBatchedWriter](https://go.dev/play/p/acwrPXfGrre)

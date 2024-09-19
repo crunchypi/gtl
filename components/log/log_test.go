@@ -483,3 +483,142 @@ func TestNewStreamedWriterWithNilCtx(t *testing.T) {
 		),
 	)
 }
+
+// -----------------------------------------------------------------------------
+// Tests: NewBatchedWriter
+// -----------------------------------------------------------------------------
+
+func TestNewBatchedWriterIdeal(t *testing.T) {
+	w := tfNewNopWriter[[]string]()
+
+	tfWriteSlice(
+		tvCtx,
+		[][]string{{"a", "b"}, {"c"}},
+		NewBatchedWriter(
+			NewBatchedWriterArgs[string]{
+				Writer:  w,
+				Logger:  defaultLogger,
+				Msg:     "test",
+				CtxKeys: []string{tvCtxKey},
+			},
+		),
+	)
+}
+
+func TestNewBatchedWriterWithNilWriter(t *testing.T) {
+	tfWriteSlice(
+		tvCtx,
+		[][]string{{"a", "b"}, {"c"}},
+		NewBatchedWriter(
+			NewBatchedWriterArgs[string]{
+				Writer:  nil,
+				Logger:  defaultLogger,
+				Msg:     "test",
+				CtxKeys: []string{tvCtxKey},
+			},
+		),
+	)
+}
+
+func TestNewBatchedWriterWithNilLogger(t *testing.T) {
+	w := tfNewNopWriter[[]string]()
+
+	tfWriteSlice(
+		tvCtx,
+		[][]string{{"a", "b"}, {"c"}},
+		NewBatchedWriter(
+			NewBatchedWriterArgs[string]{
+				Writer:  w,
+				Logger:  nil,
+				Msg:     "test",
+				CtxKeys: []string{tvCtxKey},
+			},
+		),
+	)
+}
+
+func TestNewBatchedWriterWithEmptyMsg(t *testing.T) {
+	w := tfNewNopWriter[[]string]()
+
+	tfWriteSlice(
+		tvCtx,
+		[][]string{{"a", "b"}, {"c"}},
+		NewBatchedWriter(
+			NewBatchedWriterArgs[string]{
+				Writer:  w,
+				Logger:  defaultLogger,
+				Msg:     "",
+				CtxKeys: []string{tvCtxKey},
+			},
+		),
+	)
+}
+
+func TestNewBatchedWriterWithNilCtxKeys(t *testing.T) {
+	w := tfNewNopWriter[[]string]()
+
+	tfWriteSlice(
+		tvCtx,
+		[][]string{{"a", "b"}, {"c"}},
+		NewBatchedWriter(
+			NewBatchedWriterArgs[string]{
+				Writer:  w,
+				Logger:  defaultLogger,
+				Msg:     "test",
+				CtxKeys: nil,
+			},
+		),
+	)
+}
+
+func TestNewBatchedWriterWithErrClosedPipe(t *testing.T) {
+	w := core.WriterImpl[[]string]{}
+
+	tfWriteSlice(
+		tvCtx,
+		[][]string{{"a", "b"}, {"c"}},
+		NewBatchedWriter(
+			NewBatchedWriterArgs[string]{
+				Writer:  w,
+				Logger:  defaultLogger,
+				Msg:     "test",
+				CtxKeys: []string{tvCtxKey},
+			},
+		),
+	)
+}
+
+func TestNewBatchedWriterWithErrUnknown(t *testing.T) {
+	w := core.WriterImpl[[]string]{}
+	w.Impl = func(ctx context.Context, s []string) error { return tvErr }
+
+	tfWriteSlice(
+		tvCtx,
+		[][]string{{"a", "b"}, {"c"}},
+		NewBatchedWriter(
+			NewBatchedWriterArgs[string]{
+				Writer:  w,
+				Logger:  defaultLogger,
+				Msg:     "test",
+				CtxKeys: []string{tvCtxKey},
+			},
+		),
+	)
+}
+
+func TestNewBatchedWriterWithNilCtx(t *testing.T) {
+	w := tfNewNopWriter[[]string]()
+
+	tfWriteSlice(
+		nil,
+		[][]string{{"a", "b"}, {"c"}},
+		NewBatchedWriter(
+			NewBatchedWriterArgs[string]{
+				Writer:  w,
+				Logger:  defaultLogger,
+				Msg:     "test",
+				CtxKeys: []string{tvCtxKey},
+			},
+		),
+	)
+}
