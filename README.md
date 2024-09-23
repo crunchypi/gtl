@@ -5,6 +5,7 @@ Index:
 - [errors](#errors)
 - [core interfaces](#core-interfaces)
 - [core constructors](#core-constructors)
+- [etl components](#etl-components)
 
 ## Errors
 <details>
@@ -117,3 +118,14 @@ Also, there are additional constructors for manipulating streams.
 - [`func NewWriterWithUnbatching[T any](w Writer[T]) Writer[[]T]`](
 	https://go.dev/play/p/93GgwXIly5_V
 )
+
+
+
+## ETL Components
+This section covers ETL components, they wrap [core interfaces](#core-interfaces) in order to provide some useful functionality. All links here go to the Go playground.
+
+Logging
+- [log.NewStreamedReader](https://go.dev/play/p/SY19PSZrr0a)
+- [log.NewBatchedReader](https://go.dev/play/p/jYS_Zs3v7zw)
+- [log.NewStreamedWriter](https://go.dev/play/p/NPztmctsrbQ)
+- [log.NewBatchedWriter](https://go.dev/play/p/acwrPXfGrre)
