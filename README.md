@@ -129,3 +129,6 @@ Logging
 - [log.NewBatchedReader](https://go.dev/play/p/jYS_Zs3v7zw)
 - [log.NewStreamedWriter](https://go.dev/play/p/NPztmctsrbQ)
 - [log.NewBatchedWriter](https://go.dev/play/p/acwrPXfGrre)
+
+Stats
+- [stats.NewStreamedTeeReader](https://go.dev/play/p/xQOOBB9vG0A)
