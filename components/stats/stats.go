@@ -18,6 +18,15 @@ type StatsStreamed[T any] struct {
 	Delta  time.Duration  `json:"delta"`
 }
 
+type StatsBatched struct {
+	Tag    string         `json:"tag"`
+	Len    int            `json:"len"`
+	Err    error          `json:"err"`
+	CtxMap map[string]any `json:"ctx"`
+	Stamp  time.Time      `json:"stamp"`
+	Delta  time.Duration  `json:"delta"`
+}
+
 type NewStreamedTeeReaderArgs[T, U any] struct {
 	// Reader is what the func reads from. On nil, the func simply returns
 	// a core.ReaderImpl[T], making it pointless. If it returns io.EOF,
@@ -40,6 +49,11 @@ type NewStreamedTeeReaderArgs[T, U any] struct {
 
 // NewStreamedTeeReader returns a Reader[T] which pulls from args.Reader, while
 // writing stats to args.Writer. See args for details.
+//
+// Note that the errs returned from this reader should be checked with
+// errors.Is(...), they may be from both args.Reader (e.g io.EOF), args.Writer
+// (e.g io.ErrClosedPipe) or both (wrap). If the err is from args.Writer, then
+// the value read from args.Reader may be still valid.
 //
 // Examples (interactive):
 //   - https://go.dev/play/p/xQOOBB9vG0A
@@ -68,6 +82,76 @@ func NewStreamedTeeReader[T, U any](args NewStreamedTeeReaderArgs[T, U]) core.Re
 			stats := StatsStreamed[U]{}
 			stats.Tag = args.Tag
 			stats.Val = args.Fmt(val)
+			stats.Err = err
+			stats.CtxMap = make(map[string]any, len(args.CtxKeys))
+			stats.Stamp = time.Now()
+			stats.Delta = stats.Stamp.Sub(stamp)
+
+			if ctx != nil {
+				for _, key := range args.CtxKeys {
+					stats.CtxMap[key] = ctx.Value(key)
+				}
+			}
+
+			stamp = stats.Stamp
+			err = errors.Join(err, args.Writer.Write(ctx, stats))
+			return
+		},
+	}
+}
+
+type NewBatchedTeeReaderArgs[T any] struct {
+	// Reader is what the func reads from. On nil, the func simply returns
+	// a core.ReaderImpl[T], making it pointless. If it returns io.EOF,
+	// then the returned reader will skip internal logic and also return io.EOF.
+	Reader core.Reader[[]T]
+	// Writer is where stats are written. On nil, stats are not written anywhere,
+	// and the func simply passes along values from Reader. Errors coming from
+	// here will be wrapped with any err returned from Reader using errors.Join.
+	Writer core.Writer[StatsBatched]
+	// Tag will be set to StatsStreamed.Tag which are sent to the Writer. If
+	// empty, the value will be set to "<unset>".
+	Tag string
+	// CtxKeys is used to extract values from the ctx given to the returned
+	// Reader. These k:v pairs are set to StatsStreamed.CtxMap.
+
+	CtxKeys []string
+}
+
+// NewBatchedTeeReader returns a Reader[[]T] which pulls from args.Reader, while
+// writing stats to args.Writer. It is similar to NewStreamedTeeReader but
+// works with []T and writes stats containing "len" instead of "val".
+// See args for details.
+//
+// Note that the errs returned from this reader should be checked with
+// errors.Is(...), they may be from both args.Reader (e.g io.EOF), args.Writer
+// (e.g io.ErrClosedPipe) or both (wrap). If the err is from args.Writer, then
+// the value read from args.Reader may be still valid.
+//
+// Examples (interactive):
+//   - https://go.dev/play/p/8T-eN52RPoE
+func NewBatchedTeeReader[T any](args NewBatchedTeeReaderArgs[T]) core.Reader[[]T] {
+	if args.Reader == nil {
+		return core.ReaderImpl[[]T]{}
+	}
+	if args.Writer == nil {
+		args.Writer = core.WriterImpl[StatsBatched]{}
+	}
+	if args.Tag == "" {
+		args.Tag = "<unset>"
+	}
+
+	stamp := time.Now()
+	return core.ReaderImpl[[]T]{
+		Impl: func(ctx context.Context) (s []T, err error) {
+			s, err = args.Reader.Read(ctx)
+			if err == io.EOF {
+				return
+			}
+
+			stats := StatsBatched{}
+			stats.Tag = args.Tag
+			stats.Len = len(s)
 			stats.Err = err
 			stats.CtxMap = make(map[string]any, len(args.CtxKeys))
 			stats.Stamp = time.Now()

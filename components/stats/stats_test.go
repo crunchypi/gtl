@@ -195,3 +195,122 @@ func TestNewStreamedTeeReaderWithNilFmt(t *testing.T) {
 	stat, err = rw.Read(nil)
 	assertEq("err", io.EOF, err, func(s string) { t.Fatal(s) })
 }
+
+func TestNewBatchedTeeReaderIdeal(t *testing.T) {
+	rw := core.NewReadWriterFrom[StatsBatched]()
+
+	r := NewBatchedTeeReader(
+		NewBatchedTeeReaderArgs[string]{
+			Reader:  core.NewReadWriterFrom([]string{"test1"}),
+			Writer:  rw,
+			Tag:     "test",
+			CtxKeys: []string{tvCtxKey},
+		},
+	)
+
+	// Vars.
+	val := []string{}
+	err := *new(error)
+	stat := StatsBatched{}
+
+	// Call: 1st
+	val, err = r.Read(tvCtx)
+	assertEq("err", *new(error), err, func(s string) { t.Fatal(s) })
+	assertEq("val", []string{"test1"}, val, func(s string) { t.Fatal(s) })
+
+	stat, err = rw.Read(nil)
+	assertEq("err", *new(error), err, func(s string) { t.Fatal(s) })
+	assertEq("tag", stat.Tag, "test", func(s string) { t.Fatal(s) })
+	assertEq("len", stat.Len, 1, func(s string) { t.Fatal(s) })
+	assertEq("ctx", stat.CtxMap, tvCtxMap, func(s string) { t.Fatal(s) })
+
+	// Call: 2nd.
+	val, err = r.Read(tvCtx)
+	assertEq("err", io.EOF, err, func(s string) { t.Fatal(s) })
+
+	stat, err = rw.Read(nil)
+	assertEq("err", io.EOF, err, func(s string) { t.Fatal(s) })
+}
+
+func TestNewBatchedTeeReaderWithNilReader(t *testing.T) {
+	rw := core.NewReadWriterFrom[StatsBatched]()
+
+	r := NewBatchedTeeReader(
+		NewBatchedTeeReaderArgs[string]{
+			Reader:  nil,
+			Writer:  rw,
+			Tag:     "test",
+			CtxKeys: []string{tvCtxKey},
+		},
+	)
+
+	// Vars
+	err := *new(error)
+
+	// Call: 1st
+	_, err = r.Read(tvCtx)
+	assertEq("err", io.EOF, err, func(s string) { t.Fatal(s) })
+
+	_, err = rw.Read(nil)
+	assertEq("err", io.EOF, err, func(s string) { t.Fatal(s) })
+}
+
+func TestNewBatchedTeeReaderWithNilWriter(t *testing.T) {
+	r := NewBatchedTeeReader(
+		NewBatchedTeeReaderArgs[string]{
+			Reader:  core.NewReadWriterFrom([]string{"test1"}),
+			Writer:  nil,
+			Tag:     "test",
+			CtxKeys: []string{tvCtxKey},
+		},
+	)
+
+	// Vars.
+	val := []string{}
+	err := *new(error)
+
+	// Call: 1st
+	val, err = r.Read(tvCtx)
+	assertEq("err", io.ErrClosedPipe, err, func(s string) { t.Fatal(s) })
+	assertEq("val", []string{"test1"}, val, func(s string) { t.Fatal(s) })
+
+	// Call: 2nd.
+	val, err = r.Read(tvCtx)
+	assertEq("err", io.EOF, err, func(s string) { t.Fatal(s) })
+}
+
+func TestNewBatchedTeeReaderWithUnsetTag(t *testing.T) {
+	rw := core.NewReadWriterFrom[StatsBatched]()
+
+	r := NewBatchedTeeReader(
+		NewBatchedTeeReaderArgs[string]{
+			Reader:  core.NewReadWriterFrom([]string{"test1"}),
+			Writer:  rw,
+			Tag:     "",
+			CtxKeys: []string{tvCtxKey},
+		},
+	)
+
+	// Vars.
+	val := []string{}
+	err := *new(error)
+	stat := StatsBatched{}
+
+	// Call: 1st
+	val, err = r.Read(tvCtx)
+	assertEq("err", *new(error), err, func(s string) { t.Fatal(s) })
+	assertEq("val", []string{"test1"}, val, func(s string) { t.Fatal(s) })
+
+	stat, err = rw.Read(nil)
+	assertEq("err", *new(error), err, func(s string) { t.Fatal(s) })
+	assertEq("tag", stat.Tag, "<unset>", func(s string) { t.Fatal(s) })
+	assertEq("len", stat.Len, 1, func(s string) { t.Fatal(s) })
+	assertEq("ctx", stat.CtxMap, tvCtxMap, func(s string) { t.Fatal(s) })
+
+	// Call: 2nd.
+	val, err = r.Read(tvCtx)
+	assertEq("err", io.EOF, err, func(s string) { t.Fatal(s) })
+
+	stat, err = rw.Read(nil)
+	assertEq("err", io.EOF, err, func(s string) { t.Fatal(s) })
+}
