@@ -242,3 +242,71 @@ func NewStreamedTeeWriter[T, U any](args NewStreamedTeeWriterArgs[T, U]) core.Wr
 		},
 	}
 }
+
+type NewBatchedTeeWriterArgs[T any] struct {
+	// WriterVals is what the returned Writer writes to. On nil, the func simply
+	// returns a core.WriterImpl[[]T]{}, making it pointless. If it returns an
+	// io.ErrClosedPipe, then the returned Writer returns early with that err.
+	WriterVals core.Writer[[]T]
+	// WriterStats is where stats are written. On nil, stats are not written
+	// anywhere, and the returned Writer will simply pass along values to
+	// WriterVals. Errors coming from here will be wrapped with any error
+	// returned from WriterVals using errors.Join.
+	WriterStats core.Writer[StatsBatched]
+	// Tag will be set to StatsStreamed.Tag which are sent to the Writer. If
+	// empty, the value will be set to "<unset>".
+	Tag string
+	// CtxKeys is used to extract values from the ctx given to the returned
+	// Reader. These k:v pairs are set to StatsStreamed.CtxMap.
+	CtxKeys []string
+}
+
+// NewBatchedTeeWriter returns a Writer[[]T] which writes into args.WriterVals
+// while writing stats to args.WriterStats. See args for details.
+//
+// Note that errs returned from this Writer should be checked with errors.Is(...),
+// as they may be from args.WriterVals, args.WriterStats, or both. If the
+// err is from args.WriterStats, then the value written to the returned Writer
+// may have been written successfully.
+//
+// Examples (interactive):
+//   - https://go.dev/play/p/z5kVVnCMVlh
+func NewBatchedTeeWriter[T any](args NewBatchedTeeWriterArgs[T]) core.Writer[[]T] {
+	if args.WriterVals == nil {
+		return core.WriterImpl[[]T]{}
+	}
+	if args.WriterStats == nil {
+		args.WriterStats = core.WriterImpl[StatsBatched]{}
+	}
+	if args.Tag == "" {
+		args.Tag = "<unset>"
+	}
+
+	stamp := time.Now()
+	return core.WriterImpl[[]T]{
+		Impl: func(ctx context.Context, s []T) (err error) {
+			err = args.WriterVals.Write(ctx, s)
+			if err == io.ErrClosedPipe {
+				return
+			}
+
+			stats := StatsBatched{}
+			stats.Tag = args.Tag
+			stats.Len = len(s)
+			stats.Err = err
+			stats.CtxMap = make(map[string]any, len(args.CtxKeys))
+			stats.Stamp = time.Now()
+			stats.Delta = stats.Stamp.Sub(stamp)
+
+			if ctx != nil {
+				for _, key := range args.CtxKeys {
+					stats.CtxMap[key] = ctx.Value(key)
+				}
+			}
+
+			stamp = stats.Stamp
+			err = errors.Join(err, args.WriterStats.Write(ctx, stats))
+			return
+		},
+	}
+}
