@@ -135,3 +135,6 @@ Stats
 - [stats.NewBatchedTeeReader](https://go.dev/play/p/8T-eN52RPoE)
 - [stats.NewStreamedTeeWriter](https://go.dev/play/p/8GYEViyq5hq)
 - [stats.NewBatchedTeeWriter](https://go.dev/play/p/z5kVVnCMVlh)
+
+Eventloop
+- [eventloop.New](https://go.dev/play/p/bPO8cOXpyqW)
