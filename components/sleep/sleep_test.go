@@ -22,6 +22,14 @@ func tfNewRandomReader[T any](r core.Reader[T], d time.Duration) core.Reader[T] 
 	}
 }
 
+func tfNewNopWriter[T any]() core.Writer[T] {
+	return core.WriterImpl[T]{
+		Impl: func(ctx context.Context, val T) (err error) {
+			return
+		},
+	}
+}
+
 // -----------------------------------------------------------------------------
 // Tests for: NewStaticReader
 // -----------------------------------------------------------------------------
@@ -147,5 +155,72 @@ func TestNewDynamicReaderWithBounds(t *testing.T) {
 
 	if tvVerbose {
 		t.Log(time.Since(ts))
+	}
+}
+
+// -----------------------------------------------------------------------------
+// Tests for: NewStaticWriter
+// -----------------------------------------------------------------------------
+
+func TestNewStaticWriterIdeal(t *testing.T) {
+	vw := tfNewNopWriter[int]()
+	sw := NewStaticWriter(NewStaticWriterArgs[int]{vw, tvDuration})
+
+	ts := time.Now()
+	for _, v := range []int{1, 2, 3} {
+		sw.Write(tvCtx, v)
+
+		if tvVerbose {
+			t.Log(time.Since(ts))
+		}
+
+		ts = time.Now()
+	}
+}
+
+func TestNewStaticWriterWithNilWriter(t *testing.T) {
+	sw := NewStaticWriter(NewStaticWriterArgs[int]{Delay: tvDuration})
+
+	ts := time.Now()
+	for _, v := range []int{1, 2, 3} {
+		sw.Write(tvCtx, v)
+
+		if tvVerbose {
+			t.Log(time.Since(ts))
+		}
+
+		ts = time.Now()
+	}
+}
+
+func TestNewStaticWriterWithNegativeDuration(t *testing.T) {
+	vw := tfNewNopWriter[int]()
+	sw := NewStaticWriter(NewStaticWriterArgs[int]{vw, -tvDuration})
+
+	ts := time.Now()
+	for _, v := range []int{1, 2, 3} {
+		sw.Write(tvCtx, v)
+
+		if tvVerbose {
+			t.Log(time.Since(ts))
+		}
+
+		ts = time.Now()
+	}
+}
+
+func TestNewStaticWriterWithNilCtx(t *testing.T) {
+	vw := tfNewNopWriter[int]()
+	sw := NewStaticWriter(NewStaticWriterArgs[int]{vw, tvDuration})
+
+	ts := time.Now()
+	for _, v := range []int{1, 2, 3} {
+		sw.Write(nil, v)
+
+		if tvVerbose {
+			t.Log(time.Since(ts))
+		}
+
+		ts = time.Now()
 	}
 }

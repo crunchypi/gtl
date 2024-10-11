@@ -88,3 +88,35 @@ func NewDynamicReader[T any](args NewDynamicReaderArgs[T]) core.Reader[T] {
 		},
 	}
 }
+
+type NewStaticWriterArgs[T any] struct {
+	Writer core.Writer[T]
+	Delay  time.Duration
+}
+
+// NewStaticWriter returns a Writer which writes to args.Writer and then sleeps
+// for the duration defined with args.Delay, or until ctx is done.
+//
+// Examples (interactive):
+//   - https://go.dev/play/p/cRdqr85gAh2
+func NewStaticWriter[T any](args NewStaticWriterArgs[T]) core.Writer[T] {
+	if args.Writer == nil {
+		return core.WriterImpl[T]{}
+	}
+
+	return core.WriterImpl[T]{
+		Impl: func(ctx context.Context, val T) (err error) {
+			if ctx == nil {
+				ctx = context.Background()
+			}
+
+			err = args.Writer.Write(ctx, val)
+			select {
+			case <-ctx.Done():
+			case <-time.After(args.Delay):
+			}
+
+			return
+		},
+	}
+}
