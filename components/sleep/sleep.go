@@ -120,3 +120,53 @@ func NewStaticWriter[T any](args NewStaticWriterArgs[T]) core.Writer[T] {
 		},
 	}
 }
+
+type NewDynamicWriterArgs[T any] struct {
+	Writer core.Writer[T]
+	Delay  time.Duration
+}
+
+// NewDynamicWriter returns a Writer which writes to args.Writer and then sleeps
+// for the duration defined with args.Delay, or until ctx is done.
+//
+// Unlike NewStaticWriter, this one has a couple extra properties. Firstly it
+// tries to adjust the sleep duration to a constant args.Delay, it does so by
+// subtracting args.Delay by the time it took to write to args.Writer.
+// Secondly, you may set ctx value "bounds" if you know how many things there
+// are to write and you want to write _all_ items in args.Delay amount of time.
+// This is useful if you want a complete ETL pipeline to take a specific amount
+// of time.
+//
+// Examples (interactive):
+//   - https://go.dev/play/p/SqjneD5-4pI
+func NewDynamicWriter[T any](args NewDynamicWriterArgs[T]) core.Writer[T] {
+	if args.Writer == nil {
+		return core.WriterImpl[T]{}
+	}
+
+	return core.WriterImpl[T]{
+		Impl: func(ctx context.Context, val T) (err error) {
+			if ctx == nil {
+				ctx = context.Background()
+			}
+
+			ts := time.Now()
+			err = args.Writer.Write(ctx, val)
+			if err != nil {
+				return
+			}
+
+			d := args.Delay
+			if bounds, ok := ctx.Value("bounds").(int); ok {
+				d /= time.Duration(bounds)
+			}
+
+			select {
+			case <-ctx.Done():
+			case <-time.After(d - time.Now().Sub(ts)):
+			}
+
+			return
+		},
+	}
+}

@@ -22,6 +22,15 @@ func tfNewRandomReader[T any](r core.Reader[T], d time.Duration) core.Reader[T] 
 	}
 }
 
+func tfNewRandomWriter[T any](w core.Writer[T], d time.Duration) core.Writer[T] {
+	return core.WriterImpl[T]{
+		Impl: func(ctx context.Context, val T) (err error) {
+			time.Sleep(time.Duration(rand.Intn(int(d))))
+			return w.Write(ctx, val)
+		},
+	}
+}
+
 func tfNewNopWriter[T any]() core.Writer[T] {
 	return core.WriterImpl[T]{
 		Impl: func(ctx context.Context, val T) (err error) {
@@ -216,6 +225,111 @@ func TestNewStaticWriterWithNilCtx(t *testing.T) {
 	ts := time.Now()
 	for _, v := range []int{1, 2, 3} {
 		sw.Write(nil, v)
+
+		if tvVerbose {
+			t.Log(time.Since(ts))
+		}
+
+		ts = time.Now()
+	}
+}
+
+// -----------------------------------------------------------------------------
+// Tests for: NewDynamicWriter
+// -----------------------------------------------------------------------------
+
+func TestNewDynamicWriterIdeal(t *testing.T) {
+	vw := tfNewNopWriter[int]()
+	fw := tfNewRandomWriter(vw, tvDuration/2)
+	sw := NewDynamicWriter(NewDynamicWriterArgs[int]{fw, tvDuration})
+
+	ts := time.Now()
+	for _, v := range []int{1, 2, 3} {
+		sw.Write(tvCtx, v)
+
+		if tvVerbose {
+			t.Log(time.Since(ts))
+		}
+
+		ts = time.Now()
+	}
+}
+
+func TestNewDynamicWriterWithNilWriter(t *testing.T) {
+	sw := NewDynamicWriter(NewDynamicWriterArgs[int]{Delay: tvDuration})
+
+	ts := time.Now()
+	for _, v := range []int{1, 2, 3} {
+		sw.Write(tvCtx, v)
+
+		if tvVerbose {
+			t.Log(time.Since(ts))
+		}
+
+		ts = time.Now()
+	}
+}
+
+func TestNewDynamicWriterWithNegativeDuration(t *testing.T) {
+	vw := tfNewNopWriter[int]()
+	fw := tfNewRandomWriter(vw, tvDuration/2)
+	sw := NewDynamicWriter(NewDynamicWriterArgs[int]{fw, -tvDuration})
+
+	ts := time.Now()
+	for _, v := range []int{1, 2, 3} {
+		sw.Write(tvCtx, v)
+
+		if tvVerbose {
+			t.Log(time.Since(ts))
+		}
+
+		ts = time.Now()
+	}
+}
+
+func TestNewDynamicWriterWithNilCtx(t *testing.T) {
+	vw := tfNewNopWriter[int]()
+	fw := tfNewRandomWriter(vw, tvDuration/2)
+	sw := NewDynamicWriter(NewDynamicWriterArgs[int]{fw, tvDuration})
+
+	ts := time.Now()
+	for _, v := range []int{1, 2, 3} {
+		sw.Write(nil, v)
+
+		if tvVerbose {
+			t.Log(time.Since(ts))
+		}
+
+		ts = time.Now()
+	}
+}
+
+func TestNewDynamicWriterWithBounds(t *testing.T) {
+	vw := tfNewNopWriter[int]()
+	fw := tfNewRandomWriter(vw, tvDuration/2)
+	sw := NewDynamicWriter(NewDynamicWriterArgs[int]{fw, tvDuration})
+
+	ts := time.Now()
+	ctx := context.WithValue(tvCtx, "bounds", 3)
+	for _, v := range []int{1, 2, 3} {
+		sw.Write(ctx, v)
+
+		if tvVerbose {
+			t.Log(time.Since(ts))
+		}
+
+		ts = time.Now()
+	}
+}
+
+func TestNewDynamicWriterWithErrClosedPipe(t *testing.T) {
+	vw := core.WriterImpl[int]{}
+	fw := tfNewRandomWriter(vw, tvDuration/2)
+	sw := NewDynamicWriter(NewDynamicWriterArgs[int]{fw, tvDuration})
+
+	ts := time.Now()
+	for _, v := range []int{1, 2, 3} {
+		sw.Write(tvCtx, v)
 
 		if tvVerbose {
 			t.Log(time.Since(ts))
