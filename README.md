@@ -138,3 +138,9 @@ Stats
 
 Eventloop
 - [eventloop.New](https://go.dev/play/p/bPO8cOXpyqW)
+
+Sleep
+- [sleep.NewStaticReader](https://go.dev/play/p/KsWoywcqcB6)
+- [sleep.NewDynamicReader](https://go.dev/play/p/bCj5Z1wdKMu)
+- [sleep.NewStaticWriter](https://go.dev/play/p/cRdqr85gAh2)
+- [sleep.NewDynamicWriter](https://go.dev/play/p/SqjneD5-4pI)
