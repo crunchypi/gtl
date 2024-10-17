@@ -144,3 +144,6 @@ Sleep
 - [sleep.NewDynamicReader](https://go.dev/play/p/bCj5Z1wdKMu)
 - [sleep.NewStaticWriter](https://go.dev/play/p/cRdqr85gAh2)
 - [sleep.NewDynamicWriter](https://go.dev/play/p/SqjneD5-4pI)
+
+Pagination
+- [page.NewOnceReader](https://go.dev/play/p/NOuwlVmJwbg)
