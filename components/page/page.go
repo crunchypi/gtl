@@ -55,3 +55,52 @@ func NewOnceReader(args NewOnceReaderArgs) core.Reader[Page] {
 		},
 	}
 }
+
+type NewContReaderArgs struct {
+	// Ints from here are passed as args.Total for NewOnceReader.
+	Reader core.Reader[int]
+	// Limit is passed to args.Limit for NewOnceReader.
+	Limit int
+}
+
+// NewContReader passes ints from args.Reader to NewOnceReader, from which pages
+// are returned here. When all pages are read, a new int from args.Reader is
+// passed to a new NewOnceReader, and so on.
+//
+// Examples (interactive):
+//   - https://go.dev/play/p/Dk2hZM7Wxi7
+func NewContReader(args NewContReaderArgs) core.Reader[Page] {
+	if args.Reader == nil {
+		return core.ReaderImpl[Page]{}
+	}
+
+	ln := 0                                  // Last n
+	pr := NewOnceReader(NewOnceReaderArgs{}) // Page reader
+
+	return core.ReaderImpl[Page]{
+		Impl: func(ctx context.Context) (p Page, err error) {
+			// First/next.
+			p, err = pr.Read(ctx)
+			if err != nil {
+
+				// Read next bound.
+				ln, err = args.Reader.Read(ctx)
+				if err != nil {
+					return
+				}
+
+				// Retry.
+				pr = NewOnceReader(
+					NewOnceReaderArgs{
+						Total: ln,
+						Limit: args.Limit,
+					},
+				)
+
+				p, err = pr.Read(ctx)
+			}
+
+			return p, err
+		},
+	}
+}
