@@ -14,9 +14,7 @@ type Page struct {
 	Total int // Total number of items.
 }
 
-// Paged is a wrapper of Page, containing a generic value. Not used by this
-// pkg, but defined due to its assumed usefulness since we sometimes want
-// this data being fed through a ETL pipeline.
+// Paged is a wrapper of Page, containing a generic value.
 type Paged[T any] struct {
 	Page
 	Val T
@@ -101,6 +99,39 @@ func NewContReader(args NewContReaderArgs) core.Reader[Page] {
 			}
 
 			return p, err
+		},
+	}
+}
+
+type NewOnceWriterArgs[T any] struct {
+	Writer core.Writer[Paged[T]]
+	// Total is passed to NewOnceReader
+	Total int
+	// Limit is passed to NewOnceReader
+	Limit int
+}
+
+// NewOnceWriter returns a writer which writes values to args.Writer along with
+// pagination directives, based on args.Total and args.Limit, which are passed
+// to NewOnceReader under the hood. When all pages are written, the writer
+// returned here will give an io.ErrClosedPipe.
+//
+// Examples (interactive):
+//   - https://go.dev/play/p/RfhamjAXEFE
+func NewOnceWriter[T any](args NewOnceWriterArgs[T]) core.Writer[T] {
+	if args.Writer == nil {
+		return core.WriterImpl[T]{}
+	}
+
+	pr := NewOnceReader(NewOnceReaderArgs{Total: args.Total, Limit: args.Limit})
+	return core.WriterImpl[T]{
+		Impl: func(ctx context.Context, val T) (err error) {
+			p, err := pr.Read(ctx)
+			if err != nil {
+				return io.ErrClosedPipe
+			}
+
+			return args.Writer.Write(ctx, Paged[T]{Page: p, Val: val})
 		},
 	}
 }
