@@ -206,3 +206,107 @@ func TestNewOnceWriterWithWriteErr(t *testing.T) {
 	err := vw.Write(context.Background(), "c")
 	assertEq("err", io.EOF, err, func(s string) { t.Fatal(s) })
 }
+
+// -----------------------------------------------------------------------------
+// Tests: NewContWriter.
+// -----------------------------------------------------------------------------
+
+func TestNewContWriterIdeal(t *testing.T) {
+	rw := core.NewReadWriterFrom[Paged[string]]()
+	vw := NewContWriter(
+		NewContWriterArgs[string]{
+			Reader: core.NewReaderFrom(1, 2),
+			Writer: rw,
+			Limit:  2,
+		},
+	)
+
+	err := *new(error)
+	val := Paged[string]{}
+
+	// Write pages.
+	err = vw.Write(context.Background(), "a")
+	assertEq("err", *new(error), err, func(s string) { t.Fatal(s) })
+
+	err = vw.Write(context.Background(), "b")
+	assertEq("err", *new(error), err, func(s string) { t.Fatal(s) })
+
+	err = vw.Write(context.Background(), "c")
+	assertEq("err", io.ErrClosedPipe, err, func(s string) { t.Fatal(s) })
+
+	// Read and validate.
+	val, err = rw.Read(context.Background())
+	assertEq("err", *new(error), err, func(s string) { t.Fatal(s) })
+	assertEq("skip", 0, val.Skip, func(s string) { t.Fatal(s) })
+	assertEq("limit", 1, val.Limit, func(s string) { t.Fatal(s) })
+	assertEq("total", 1, val.Total, func(s string) { t.Fatal(s) })
+	assertEq("val", "a", val.Val, func(s string) { t.Fatal(s) })
+
+	val, err = rw.Read(context.Background())
+	assertEq("err", *new(error), err, func(s string) { t.Fatal(s) })
+	assertEq("skip", 0, val.Skip, func(s string) { t.Fatal(s) })
+	assertEq("limit", 2, val.Limit, func(s string) { t.Fatal(s) })
+	assertEq("total", 2, val.Total, func(s string) { t.Fatal(s) })
+	assertEq("val", "b", val.Val, func(s string) { t.Fatal(s) })
+
+	val, err = rw.Read(context.Background())
+	assertEq("err", io.ErrClosedPipe, err, func(s string) { t.Fatal(s) })
+	assertEq("skip", 0, val.Skip, func(s string) { t.Fatal(s) })
+	assertEq("limit", 0, val.Limit, func(s string) { t.Fatal(s) })
+	assertEq("total", 0, val.Total, func(s string) { t.Fatal(s) })
+	assertEq("val", "", val.Val, func(s string) { t.Fatal(s) })
+}
+
+func TestNewContWriterWithNilReader(t *testing.T) {
+	rw := core.NewReadWriterFrom[Paged[string]]()
+	vw := NewContWriter(
+		NewContWriterArgs[string]{
+			Reader: nil,
+			Writer: rw,
+			Limit:  2,
+		},
+	)
+
+	err := *new(error)
+	val := Paged[string]{}
+
+	// Write pages.
+	err = vw.Write(context.Background(), "a")
+	assertEq("err", io.ErrClosedPipe, err, func(s string) { t.Fatal(s) })
+
+	// Read and validate.
+	val, err = rw.Read(context.Background())
+	assertEq("err", io.ErrClosedPipe, err, func(s string) { t.Fatal(s) })
+	assertEq("skip", 0, val.Skip, func(s string) { t.Fatal(s) })
+	assertEq("limit", 0, val.Limit, func(s string) { t.Fatal(s) })
+	assertEq("total", 0, val.Total, func(s string) { t.Fatal(s) })
+	assertEq("val", "", val.Val, func(s string) { t.Fatal(s) })
+}
+
+func TestNewContWriterWithNilWriter(t *testing.T) {
+	vw := NewContWriter(
+		NewContWriterArgs[string]{
+			Reader: core.NewReaderFrom(1, 2),
+			Writer: nil,
+			Limit:  2,
+		},
+	)
+
+	// Write pages.
+	err := vw.Write(context.Background(), "a")
+	assertEq("err", io.ErrClosedPipe, err, func(s string) { t.Fatal(s) })
+}
+
+func TestNewContWriterWithWriteErr(t *testing.T) {
+	vw := NewContWriter(
+		NewContWriterArgs[string]{
+			Reader: core.NewReaderFrom(1, 2),
+			Writer: core.WriterImpl[Paged[string]]{},
+			Limit:  2,
+		},
+	)
+
+	// Write pages.
+	err := vw.Write(context.Background(), "a")
+	assertEq("err", io.ErrClosedPipe, err, func(s string) { t.Fatal(s) })
+}

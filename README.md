@@ -149,3 +149,4 @@ Pagination
 - [page.NewOnceReader](https://go.dev/play/p/NOuwlVmJwbg)
 - [page.NewContReader](https://go.dev/play/p/Dk2hZM7Wxi7)
 - [page.NewOnceWriter](https://go.dev/play/p/RfhamjAXEFE)
+- [page.NewContWriter](https://go.dev/play/p/M1DXEuEo5d2)

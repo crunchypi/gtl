@@ -135,3 +135,33 @@ func NewOnceWriter[T any](args NewOnceWriterArgs[T]) core.Writer[T] {
 		},
 	}
 }
+
+type NewContWriterArgs[T any] struct {
+	Reader core.Reader[int]
+	Writer core.Writer[Paged[T]]
+	Limit  int
+}
+
+// NewContWriter returns a writer which writes values to args.Writer along with
+// pagination directives coming from an internal NewContReader made with
+// args.Reader and args.Limit.
+//
+// Examples (interactive):
+//   - https://go.dev/play/p/M1DXEuEo5d2
+func NewContWriter[T any](args NewContWriterArgs[T]) core.Writer[T] {
+	if args.Reader == nil || args.Writer == nil {
+		return core.WriterImpl[T]{}
+	}
+
+	pr := NewContReader(NewContReaderArgs{Reader: args.Reader, Limit: args.Limit})
+	return core.WriterImpl[T]{
+		Impl: func(ctx context.Context, val T) (err error) {
+			p, err := pr.Read(ctx)
+			if err != nil {
+				return io.ErrClosedPipe
+			}
+
+			return args.Writer.Write(ctx, Paged[T]{Page: p, Val: val})
+		},
+	}
+}
